@@ -1,0 +1,40 @@
+[project]
+name = "maths-api"
+version = "0.1.0"
+description = "Adaptive maths practice platform — FastAPI backend"
+requires-python = ">=3.11"
+# Pinned exactly (reference-project convention) so local dev, CI and the
+# Render image all build the same environment.
+dependencies = [
+    "fastapi==0.139.2",
+    "uvicorn[standard]==0.51.0",
+    "sqlalchemy==2.0.51",
+    "psycopg[binary]==3.3.4",
+    "alembic==1.18.5",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.2",
+    "PyJWT[crypto]==2.13.0",
+    "boto3==1.43.55",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff==0.16.0",
+    "mypy==2.3.0",
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+    "pyyaml==6.0.3",
+    "types-PyYAML==6.0.12.20260724",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+# Lint/type config lives in the repo-root pyproject.toml (shared with scripts/).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
