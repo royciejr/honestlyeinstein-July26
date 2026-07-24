@@ -1,0 +1,75 @@
+# =============================================================================
+# EXAMPLE SKILL GRAPH — replace with the real curriculum.
+# This file is the single source of truth for modules, skills, edges and
+# curriculum mappings. Load with:  python scripts/load_graph.py content/graph.yaml
+#
+# Rules enforced by the loader:
+#   - slugs: lowercase kebab-case, unique across the whole file
+#   - edges: both endpoints must exist, no self-edges, no cycles
+#   - mappings: KS2 codes like 6F5 / 4C6b, CCSS codes like 5.NF.A.1
+# Edges and mappings are fully replaced on every load (this file mirrors the
+# DB exactly); modules and skills are upserted by slug and never deleted.
+# =============================================================================
+
+modules:
+  - slug: place-value-peaks
+    title: Place Value Peaks
+    sort_order_uk: 1
+    sort_order_us: 1
+    description: >
+      EXAMPLE module. Reading, writing, ordering and rounding whole numbers.
+    skills:
+      - slug: place-value-to-10000
+        title: Place value up to 10,000
+        year_band_uk: Y4
+        grade_band_us: G3
+        mastery_rule: { type: window, min_attempts: 6, accuracy: 0.85 }
+        mappings:
+          - { scheme: KS2, code: 4N2, notes: EXAMPLE mapping }
+          - { scheme: CCSS, code: 4.NBT.A.2 }
+      - slug: round-to-nearest-1000
+        title: Round numbers to the nearest 10, 100 or 1,000
+        year_band_uk: Y4
+        grade_band_us: G4
+        mastery_rule: { type: window, min_attempts: 6, accuracy: 0.85 }
+        mappings:
+          - { scheme: KS2, code: 4N4b }
+          - { scheme: CCSS, code: 4.NBT.A.3 }
+
+  - slug: times-table-temple
+    title: Times Table Temple
+    sort_order_uk: 2
+    sort_order_us: 2
+    description: >
+      EXAMPLE module. Multiplication and division fluency.
+    skills:
+      - slug: times-tables-to-12
+        title: Times tables up to 12 × 12
+        year_band_uk: Y4
+        grade_band_us: G3
+        mastery_rule: { type: streak, correct_in_a_row: 10 }
+        mappings:
+          - { scheme: KS2, code: 4C6a }
+          - { scheme: CCSS, code: 3.OA.C.7 }
+      - slug: multiply-2digit-by-1digit
+        title: Multiply 2-digit numbers by 1-digit numbers
+        year_band_uk: Y4
+        grade_band_us: G4
+        mastery_rule: { type: window, min_attempts: 8, accuracy: 0.8 }
+        mappings:
+          - { scheme: KS2, code: 4C7 }
+          - { scheme: CCSS, code: 4.NBT.B.5 }
+      # country_flag example: a UK-only skill (11+ stretch has these too).
+      - slug: divide-with-remainders
+        title: Divide with remainders
+        year_band_uk: Y5
+        grade_band_us: G4
+        country_flag: UK
+        mastery_rule: { type: window, min_attempts: 8, accuracy: 0.8 }
+        mappings:
+          - { scheme: KS2, code: 5C5a }
+
+# Cross-module prerequisite edges (skill slug -> skill slug).
+edges:
+  - { prereq: place-value-to-10000, unlocks: multiply-2digit-by-1digit }
+  - { prereq: round-to-nearest-1000, unlocks: divide-with-remainders }

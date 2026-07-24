@@ -1,0 +1,22 @@
+# EXAMPLE questions. Each question maps to a skill slug from content/graph.yaml.
+# question_no is a string ("2a" style part-numbering is allowed).
+- question_no: "1"
+  skill: times-tables-to-12
+  max_marks: 1
+  mark_scheme:
+    answer: "56"
+    working: "7 × 8"
+
+- question_no: "2"
+  skill: place-value-to-10000
+  max_marks: 1
+  mark_scheme:
+    answer: "4,306"
+    working: "four thousand three hundred and six in digits"
+
+- question_no: "3a"
+  skill: multiply-2digit-by-1digit
+  max_marks: 2
+  mark_scheme:
+    answer: "252"
+    working: "63 × 4; award 1 mark for a correct partial method"

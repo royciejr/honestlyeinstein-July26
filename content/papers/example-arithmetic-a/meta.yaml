@@ -1,0 +1,8 @@
+# EXAMPLE PAPER — fabricated questions, not a real SATs paper.
+# The directory name (example-arithmetic-a) is the paper's slug.
+title: "EXAMPLE Arithmetic Paper A"
+source: "Fabricated example content for testing the loader — not a real paper"
+country: UK
+year: 2026
+license: "Example content, no restrictions"
+# file_ref: optional pointer to the source PDF (S3 key or URL) once you load real papers.
