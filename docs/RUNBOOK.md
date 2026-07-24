@@ -54,7 +54,10 @@ python -c "import secrets; print(secrets.token_hex(32))"
 1. Create a project (region: AWS ap-southeast-1 to match everything else), database `maths`.
 2. Copy the **direct** connection string — host must NOT contain `-pooler` — with
    `?sslmode=require`.
-3. Migrate and load the example content:
+3. Create the schema. Two equivalent routes:
+   - **Zero-tooling**: paste `docs/sql/0001_initial_schema.sql` into the Neon console
+     SQL editor and run it (it also stamps `alembic_version`, so alembic stays in sync).
+   - **Or via Alembic** (and then load the example content):
 
 ```bash
 cd apps/api
@@ -68,6 +71,8 @@ python scripts/load_graph.py content/graph.yaml
 python scripts/load_paper.py content/papers/example-arithmetic-a
 ```
 
+   (The two loader commands need local Python either way — they validate and upsert
+   `content/` into the DB.)
 4. One-time sanity check that the hand-written initial migration matches the models
    (should print no changes): `cd apps/api && alembic revision --autogenerate -m probe`
    — inspect that the generated file is empty, then delete it.
