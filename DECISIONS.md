@@ -1,0 +1,37 @@
+# Decisions log
+
+One line per non-obvious choice, with the rejected alternative. Newest at the bottom.
+
+- **DB driver**: psycopg v3 everywhere via SQLAlchemy's dual dialect (`postgresql+psycopg://` — async app, sync Alembic/loaders). Rejected asyncpg: would force a second driver for migrations; psycopg3 is also the reference project's Neon-proven choice.
+- **Config**: `pydantic-settings` Settings class. Rejected reference-style scattered `os.environ.get`.
+- **Internal auth**: HMAC-SHA256 `t=<unix>,v1=<hex>` over `"<t>.<body>"`, `compare_digest`, ±300s window. Rejected reference's plaintext `==` shared secret (no replay protection, not constant-time).
+- **Admin gating**: `ADMIN_CLERK_USER_IDS` env allowlist. Rejected Clerk role claims in session tokens — needs dashboard JWT customisation, overkill for one admin.
+- **PK style**: UUID with `gen_random_uuid()` server default (PG16 built-in). Rejected int sequences: unguessable ids for child-owned rows, no pgcrypto extension needed.
+- **`papers.slug` added** (not in the original column list): natural key for idempotent paper loading; matches `content/papers/<slug>/`. Rejected title+year matching (fragile).
+- **`paper_questions.question_no` is String(8)**, not int: reasoning papers number parts "2a"/"2b". Unique per paper.
+- **`review_queue.template_id` nullable**: on generator/verifier disagreement the candidate never became a template row — it lives in `payloads`. Rejected inserting a rejected template row just to point at it.
+- **`uploads.marked_at` added**: cheap observability for pipeline latency. Rejected parsing it out of marking_json.
+- **FK deletion semantics**: children's rows CASCADE (deleting a child deletes their data), content FKs RESTRICT (graph edits can't wipe papers/templates), attempts' content refs SET NULL (append-only audit survives). Rejected uniform CASCADE.
+- **Migrations run manually** (`alembic upgrade head` locally against Neon). Rejected auto-migrate on boot: the reference's on-boot DDL was a workaround for having no migration tool.
+- **Initial migration hand-authored** (no live Postgres in the build environment); a unit test asserts models and migration cover the same 12 tables, and RUNBOOK says to run `alembic revision --autogenerate` once against Neon to confirm an empty diff.
+- **Graph loader semantics**: modules/skills upserted by slug and never deleted; edges/mappings fully replaced each load (graph.yaml mirrors the DB). Rejected diff-and-delete of skills: too destructive for a v1 loader.
+- **Loader `--check` mode** validates without a DB (CI runs it); paper loader cross-checks skill slugs against graph.yaml in that mode, FKs enforce at load time.
+- **Extra endpoint `GET /children/{id}/uploads`** beyond the brief: needed to see upload status land (DoD #2) from the UI/demo script.
+- **Extra endpoint `POST /internal/generation-result`**: Step Functions writer posts through the API exactly like the marker — Lambdas never hold DB credentials. Rejected Lambdas writing to Neon directly.
+- **next-drill stub**: prefer the child's weakest skill (lowest mastery, then elo), random verified template, params sampled from `param_constraints`. Real adaptive selection is a later phase.
+- **One SFN writer Lambda** invoked from both Choice branches with `kind=approved|review`. Rejected two near-identical Lambdas.
+- **Budget stack pinned to us-east-1**: `AWS::Budgets::Budget` CloudFormation only deploys there; the budget itself is account-global.
+- **Upload bucket `RemovalPolicy.DESTROY` without `autoDeleteObjects`**: teardown succeeds only when the bucket is already empty — no path that bulk-deletes children's photos. Rejected RETAIN (orphan buckets) and autoDelete (adds a delete-everything Lambda).
+- **Lambdas are stdlib-only zips**; the small HMAC-post helper is duplicated in marker and writer. Rejected a shared layer: versioning/deploy overhead for ~30 lines.
+- **`INTERNAL_HMAC_SECRET` enters Lambdas as plain env from the deploying shell**. Rejected Secrets Manager ($0.40/secret/mo + SDK fetch) and SSM for Phase 1; revisit when there's more than one operator. Rotation = redeploy.
+- **S3 CORS origins from cdk.json context `webOrigins`** — update after the first Vercel deploy. Rejected `*`: presign gates writes, but there's no reason to advertise PUT to every origin.
+- **Bedrock model id env var** points at the APAC cross-region Claude Sonnet inference profile; unused while `MARKER_STUB_ENABLED=true`.
+- **Web stack: Next 14.2.x + @clerk/nextjs 6.x** (reference-proven pair; Clerk 7 requires Next 15). Upgrade later is routine.
+- **`fetch` wrapper instead of axios+interceptor**: same token-injection idea, one dependency fewer.
+- **Hand-rolled ~50-line service worker + manifest**. Rejected next-pwa: a dependency to babysit for what Phase 1 needs (shell precache + offline fallback).
+- **PWA icons are generated solid-colour PNGs** (placeholder branding). Replace with real artwork whenever.
+- **Repo-root pyproject.toml carries shared ruff/mypy config** so `scripts/` is linted/typed identically to the API. B008 ignored (FastAPI `Depends` idiom).
+- **Exact `==` pins for all Python deps** (resolved 2026-07-24): local, CI and Docker build identical environments.
+- **No DB-integration tests in Phase 1 CI**: models use JSONB/UUID (no SQLite fallback); tests cover pure logic, HMAC gates, and model↔migration structure. Revisit with a Postgres service container when logic warrants it.
+- **`/healthz` never touches the DB** so Render health checks don't recycle the service during Neon scale-to-zero cold starts (`pool_pre_ping` + retry absorb them per-request).
+- **Mastery stub**: photo marking bumps `child_state` (elo ±15 clamped 400–2400, mastery_level→1 on any correct); module unlock = every skill in the previous module at level ≥1. All placeholder until the adaptive phase.
