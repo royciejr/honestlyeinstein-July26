@@ -1,0 +1,24 @@
+# Repo-wide Python tooling config (no [project] here on purpose — the only
+# installable package is apps/api). Ruff and mypy find this from the root, so
+# apps/api and scripts/ share one lint/type standard.
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# B008: `Depends(...)` in argument defaults is the core FastAPI idiom.
+ignore = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+# Lets scripts/*.py resolve `from app... import ...`.
+mypy_path = ["apps/api"]

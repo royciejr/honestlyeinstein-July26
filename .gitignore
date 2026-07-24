@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.next/
+out/
+coverage/
+
+# CDK
+infra/cdk.out/
+infra/*.js.map
+infra/bin/*.js
+infra/lib/*.js
+infra/bin/*.d.ts
+infra/lib/*.d.ts
+
+# Env / secrets — never commit real values
+.env
+.env.local
+.env*.local
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Build artefacts
+dist/
+build/
+*.tsbuildinfo
