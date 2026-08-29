@@ -24,6 +24,10 @@ on:
           - MathsUploadPipeline
           - MathsGenerationPipeline
           - MathsBudget
+      bootstrap:
+        description: "Run cdk bootstrap first (tick on the very first deploy)"
+        type: boolean
+        default: false
 
 concurrency:
   group: aws-deploy
@@ -62,6 +66,12 @@ jobs:
           aws-region: ap-southeast-1
 
       - run: npm ci
+
+      - name: CDK bootstrap (first run only)
+        if: inputs.bootstrap
+        run: |
+          ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+          npx cdk bootstrap "aws://${ACCOUNT}/ap-southeast-1" "aws://${ACCOUNT}/us-east-1"
 
       - name: CDK deploy
         env:
