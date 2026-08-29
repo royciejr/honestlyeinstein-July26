@@ -1,0 +1,78 @@
+name: "DB migrate + load content (tap to run)"
+
+# Manual button: runs Alembic migrations and the content loaders against Neon
+# from a GitHub runner (runners have open egress, so port 5432 works — unlike
+# Claude sessions). This makes "edit graph.yaml on my phone → load it" a
+# two-tap flow: merge the edit, run this workflow.
+#
+# Requires (Settings → Secrets and variables → Actions):
+#   secret  DATABASE_URL   the DIRECT Neon connection string (no -pooler host)
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to run"
+        type: choice
+        default: migrate-and-load
+        options:
+          - migrate-and-load
+          - migrate-only
+          - load-only
+          - validate-only (no DB)
+
+concurrency:
+  group: db-ops
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard — DATABASE_URL secret present
+        if: inputs.action != 'validate-only (no DB)'
+        run: |
+          [ -n "${{ secrets.DATABASE_URL }}" ] || { echo "::error::Actions secret DATABASE_URL is not set"; exit 1; }
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+
+      - name: Install
+        run: pip install -e 'apps/api[dev]'
+
+      - name: Validate content (always, no DB needed)
+        run: |
+          python scripts/load_graph.py content/graph.yaml --check
+          for paper in content/papers/*/; do
+            python scripts/load_paper.py "$paper" --check
+          done
+
+      - name: Alembic upgrade head
+        if: inputs.action == 'migrate-and-load' || inputs.action == 'migrate-only'
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: alembic upgrade head
+
+      - name: Load graph + papers
+        if: inputs.action == 'migrate-and-load' || inputs.action == 'load-only'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          {
+            echo "## Content load"
+            echo '```'
+            python scripts/load_graph.py content/graph.yaml
+            for paper in content/papers/*/; do
+              python scripts/load_paper.py "$paper"
+            done
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"

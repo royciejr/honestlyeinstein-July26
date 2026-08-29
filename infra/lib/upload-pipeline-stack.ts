@@ -18,8 +18,16 @@ export class UploadPipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const webOrigins: string[] =
+    // Context may arrive as an array (cdk.json) or a comma-separated string
+    // (-c webOrigins=... from the deploy workflow).
+    const rawOrigins: unknown =
       this.node.tryGetContext('webOrigins') ?? ['http://localhost:3000'];
+    const webOrigins: string[] = Array.isArray(rawOrigins)
+      ? rawOrigins.map(String)
+      : String(rawOrigins)
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean);
     const apiBaseUrl: string =
       this.node.tryGetContext('apiBaseUrl') ?? 'http://localhost:8000';
     const hmacSecret = process.env.INTERNAL_HMAC_SECRET ?? '';
