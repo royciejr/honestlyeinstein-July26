@@ -1,6 +1,6 @@
 {
-  "name": "Maths Quest",
-  "short_name": "MathsQuest",
+  "name": "Honestly Einstein",
+  "short_name": "Einstein",
   "description": "Adaptive maths practice for ages 8-11",
   "start_url": "/",
   "display": "standalone",
