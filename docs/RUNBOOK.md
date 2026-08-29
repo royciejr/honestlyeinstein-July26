@@ -58,7 +58,13 @@ load content**) → Clerk → Render → Vercel → set `API_BASE_URL`/`WEB_ORIG
 **Deploy AWS** → copy the bucket name into Render's `S3_UPLOAD_BUCKET` → **Run generation
 pipeline** → upload a photo from your phone at /upload.
 
-None of the workflows fire on push — they are manual buttons only.
+None of the workflows fire on push — they are manual buttons only. They're also
+triggerable by Claude Code sessions (via the GitHub integration), so the day-to-day loop
+can be entirely conversational: describe the change → Claude builds, pushes, and runs the
+relevant workflow → results land in the Actions run summary. The only things Claude can
+never do are the ones that touch your accounts: the one-time CloudShell bootstrap,
+entering secrets into GitHub, and the Neon/Clerk/Render/Vercel dashboard setup — all of
+which work from a phone browser.
 
 ## 0. Prerequisites
 
